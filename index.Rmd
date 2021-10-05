@@ -7,7 +7,7 @@ output:
       bg: "#B3B6B7"
       fg: "#B3B6B7" 
       primary: "#B3B6B7"
-      navbar-bg: "#990033"
+      navbar-bg: "#78281F"
       base_font: 
         google: Prompt
       heading_font:
@@ -69,7 +69,7 @@ Column {.tabset}
 <div class="myDiv1">
   <h2></h2>
   <p></p>
-#### **<span style="color:#B3B6B7">Heatmap de casos confirmados por Jurisdición </span>**
+#### **<span style="color:#78281F">Heatmap de casos confirmados por Jurisdición </span>**
 ```{r}
 heatmap_confirmados(dataset = x, 
                     year = 2021, 
@@ -80,7 +80,7 @@ heatmap_confirmados(dataset = x,
                     EDO = FALSE)
 ```
 
-#### **<span style="color:B3B6B7">Heatmap de casos confirmados por Municipio</span>**
+#### **<span style="color:#78281F">Heatmap de casos confirmados por Municipio</span>**
 ```{r}
 heatmap_confirmados(dataset = x, 
                     year = 2021, 
@@ -91,7 +91,7 @@ heatmap_confirmados(dataset = x,
                     EDO = FALSE)
 ```
 
-#### **<span style="color:#B3B6B7">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2020) </span>**
+#### **<span style="color:#78281F">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2020) </span>**
 
 ```{r}
 heatmap_confirmados_col(dataset = x,
@@ -103,7 +103,7 @@ heatmap_confirmados_col(dataset = x,
 ```
 
 
-#### **<span style="color:B3B6B7">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2021)</span>**
+#### **<span style="color:#78281F">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2021)</span>**
 
 ```{r}
 heatmap_confirmados_col(dataset = x,
@@ -114,7 +114,7 @@ heatmap_confirmados_col(dataset = x,
                         loc  = "CHILPANCINGO DE LOS BRAVO")
 ```
 
-#### **<span style="color:B3B6B7"> Canal Endémico de la localidad de Chilpancingo</span>**
+#### **<span style="color:#78281F"> Canal Endémico de la localidad de Chilpancingo</span>**
 ```{r}
 load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_loc.RData")
 plotly::ggplotly(boldenr::epi_channel(x = w,
