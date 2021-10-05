@@ -1,4 +1,4 @@
 runtime: shiny
 logo: images/cover.jpg
-name: "den_ver_dashboard"
+name: "direccion_municipal_salud"
 output_dir: docs

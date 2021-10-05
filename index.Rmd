@@ -1,18 +1,32 @@
 ---
-title: "Programa de Prevención y Control del Dengue del estado de Veracruz"
-output: 
+title: "Secretaría de Salud Municipal, Chilpancingo de los Bravo"
+output:
   flexdashboard::flex_dashboard:
-      theme: flatly
+    theme:
+      version: 4
+      bg: "#808B96"
+      fg: "white" 
+      primary: "white"
+      navbar-bg: "#943126"
+      base_font: 
+        google: Prompt
+      heading_font:
+        google: Sen
+      code_font:
+        google: 
+          # arguments to sass::font_google() 
+          family: JetBrains Mono
+          local: true
 output_dir: docs
 cover-image: images/cover.jpg
 ---
-
-
 
 ```{r, cache=TRUE}
 x <- boldenr::read_dataset_bol(path = "C:/Users/felip/OneDrive/datasets/DGE/arbo/",
                                 dataset = "sinave")
 source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/heatmap_confirmados.R')
+source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/heatmap_confirmados_col.R', encoding = 'UTF-8')
+
 ```
 
 ```{r}
@@ -30,6 +44,7 @@ library(ggplot2)
 ```
 
 
+
 **Vigilancia Epidemiológica**
 =====================================  
 
@@ -37,507 +52,13 @@ Column {.tabset}
 ------------------------------------
 
 
-### **<span style="color:#7d9029"> Casos por Estado </span>**
-<html>
-<head>
-<style>
-</style>
-</head>
-<body>
-<div >
-  <h2></h2>
-  <p></p>
+### **<span style="color:#006600; font-size: 20px"> Dengue </span>**
 
-#### **<span style="color:blue">Rank de los Casos de Dengue por semana </span>**
-```{r}
-##
-rank_cases <- function(x){
-    x %>%
-        arrange(dplyr::desc(value)) %>%
-        dplyr::mutate(rank = 1:dplyr::n())
-}
-##
-
-df <- x %>%
-    dplyr::filter(ANO == 2021) %>%
-    dplyr::filter(!DES_EDO_RES %in% c("OTROS PAISES", 
-                                      "OTROS PAISES DE LATINOAMERICA",
-                                      "ESTADOS UNIDOS DE NORTEAMERICA")) %>%
-    dplyr::filter(DES_DIAG_FINAL %in% 
-                      c("DENGUE CON SIGNOS DE ALARMA", 
-                        "DENGUE NO GRAVE", 
-                        "DENGUE GRAVE")) %>%
-    dplyr::group_by(DES_EDO_RES, SEM) %>%
-    dplyr::summarise(value = dplyr::n(), .groups = "drop") %>%
-    dplyr::group_by(SEM) %>%
-    dplyr::mutate(CVE_EDO_RES = DES_EDO_RES) %>%
-    #dplyr::mutate(rank = rank(value, ties.method = "random"))%>% 
-    tidyr::nest() %>%
-    dplyr::mutate(rank = purrr::map(data,
-                                    rank_cases)) %>%
-    dplyr::select(-data) %>%
-    tidyr::unnest(cols = c(rank)) %>%
-    as.data.frame()
-
-
-plotly::ggplotly(
-    ggplot2::ggplot(data = df,
-                    ggplot2:::aes(SEM, 
-                                  rank, 
-                                  color = CVE_EDO_RES)) +
-        ggplot2::geom_point(size = 5) +
-        ggplot2::geom_text(data = df %>% 
-                               dplyr::filter(SEM == min(SEM)),
-                           ggplot2::aes(x = SEM - .1, 
-                                        label = CVE_EDO_RES), 
-                           size = 3, 
-                           nudge_x = -1,
-                           hjust = 1) +
-        ggplot2::geom_text(data = df %>% 
-                               dplyr::filter(SEM == max(SEM)),
-                           ggplot2::aes(x = SEM + .1, 
-                                        label = CVE_EDO_RES), 
-                           size = 3, 
-                           nudge_x = 1,
-                           hjust = 0) +
-        ggbump::geom_bump(size = 2, smooth = 8) +
-        ggplot2::scale_x_continuous(breaks = seq(1, max(df$SEM), 1)) +
-        cowplot::theme_minimal_grid(font_size = 14, 
-                                    line_size = 0) +
-        ggplot2::theme(legend.position = "none",
-                       panel.grid.major = element_blank()) +
-        ggplot2::labs(y = "Rank de Casos Confirmados de Dengue",
-                      x = "Semana Epidemiológica") +
-        ggplot2::scale_y_reverse() +
-        ggplot2::scale_color_manual(values = viridis::magma(n = length(unique(df$CVE_EDO_RES))))
-)
-
-```  
-
-
-<div style = "display: grid; width: 1px; grid-template-columns: 700px 700px; align-items: start; justify-content: space-between;">
-#### **<span style="color:blue"> Treemap de casos acumulados </span>**
-```{r, out.width="100%", out.height="100%"}
-x %>%
-    dplyr::filter(ANO == "2021") %>%
-    dplyr::filter(!DES_EDO_RES %in% c("OTROS PAISES", 
-                                      "OTROS PAISES DE LATINOAMERICA",
-                                      "ESTADOS UNIDOS DE NORTEAMERICA")) %>%
-    dplyr::filter(DES_DIAG_FINAL %in% 
-                      c("DENGUE CON SIGNOS DE ALARMA", "DENGUE NO GRAVE", 
-                        "DENGUE GRAVE")) %>%
-    dplyr::group_by(DES_EDO_RES,DES_DIAG_FINAL) %>%
-    dplyr::summarise(value = dplyr::n(), 
-                     .groups = "drop") %>%
-    dplyr::mutate(DES_EDO_RES = stringr::str_to_title(DES_EDO_RES),
-                  DES_DIAG_FINAL = stringr::str_to_title(DES_DIAG_FINAL)) %>%
-    dplyr::mutate(DES_DIAG_FINAL = factor(DES_DIAG_FINAL,
-                                          levels = c("Dengue Con Signos De Alarma",
-                                                     "Dengue Grave",
-                                                     "Dengue No Grave"),
-                                          labels = c("DSA", "DG", "DNG"))) %>%
-    ggplot2::ggplot(ggplot2::aes(area = value, 
-                                 fill = DES_EDO_RES,
-                                 subgroup = DES_EDO_RES,
-                                 label = DES_DIAG_FINAL)) +
-    treemapify::geom_treemap() +
-    treemapify::geom_treemap_text(fontface = "italic", 
-                                  colour = "black", 
-                                  place = "bottom",
-                                  #alpha = 0.5,
-                                  grow = F) +
-    treemapify::geom_treemap_subgroup_text(place = "middle", 
-                                           colour = "White", 
-                                           #alpha = 0.8, 
-                                           grow = T)+
-    ggplot2::theme(legend.position = "none") +
-    ggplot2::scale_fill_viridis_d()
-```
-
-<div>
-#### **<span style="color:blue"> Casos confirmados y serotipos </span>**
-```{r,out.width="100%", out.height="100%"}
-boldenr::plot_state_serotype(dataset = x, 
-                                  year = 2021, 
-                                  x_serotype  = 0.5, 
-                                  y_serotype = 0.17, 
-                                  scale_serotype = 1.7)
-```
-</div>
-</div>
-
-
-#### **<span style="color:blue"> Heatmap de casos confirmados por semana </span>**
-```{r}
-heatmap_confirmados(dataset = x, 
-                    year = 2021, 
-                    size_text = 3, 
-                    EDO = TRUE)
-```
-
-
-<div style = "display: grid; width: 1px; grid-template-columns: 700px 700px; align-items: start; justify-content: space-between;">
-#### **<span style="color:blue"> Casos por Municipio (Areal Map) </span>**
-<img src="den_ver_2021_areal_animap.gif" width="700" height="700" />
-<div>
-#### **<span style="color:blue"> Casos por  Municipio (Dot Map)  </span>**
-<img src="den_ver_2021_dot_animap.gif" width="700" height="700" />
-</div>
-</div>
-
-
-</div>
-</body>
-</html>
-
-
-### **<span style="color:#7d9029"> Bump Maps </span>**
-
-<html>
-<head>
-<style>
-</style>
-</head>
-<body>
-
-<div >
-  <h2></h2>
-  <p></p>
-  
-<div style = "display: grid; width: 2px; grid-template-columns: 750px 750px; align-items: start; justify-content: start; justify-items: center;">
-#### **<span style="color:blue"> Rank Casos confirmados 2020 </span>**
-```{r, out.width="100%", out.height="100%"}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map.R')
-library(dplyr)
-static_bump_map(dataset = x,
-                year = "2020",
-                state = TRUE,
-                size_text_value = 3,
-                size_text = 3,
-                country_text_x = 0.5,
-                country_text_y = 0.8,
-                line_size = 1.5,
-                pal_vir = "viridis")
-```
-
-<div>
-#### **<span style="color:blue"> Rank Casos confirmados 2021 </span>**
-```{r, out.width="100%", out.height="100%"}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map.R')
-library(dplyr)
-static_bump_map(dataset = x,
-                year = "2021",
-                state = TRUE,
-                size_text_value = 3,
-                size_text = 3,
-                country_text_x = 0.5,
-                country_text_y = 0.8,
-                line_size = 1.5,
-                pal_vir = "viridis")
-```
-</div>
-</div>
-
-<div style = "display: grid; width: 2px; grid-template-columns: 750px 750px; align-items: start; justify-content: start; justify-items: center;">
-#### **<span style="color:blue"> Rank Casos confirmados 2020 Veracruz </span>**
-```{r}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map.R')
-static_bump_map(dataset = x,
-                year = "2020",
-                state = FALSE,
-                cve_edo = "30",
-                axis_start = 3,
-                country_text_x = .3,
-                country_text_y = 0.1,
-                value_text = .3,
-                size_text_value = 4,
-                pal_vir = "viridis")
-```
-
-<div>
-#### **<span style="color:blue"> Rank Casos confirmados 2021 Veracruz </span>**
-```{r}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map.R')
-static_bump_map(dataset = x,
-                year = "2021",
-                state = FALSE,
-                cve_edo = "30",
-                axis_start = 3,
-                country_text_x = .3,
-                country_text_y = 0.1,
-                value_text = .3,
-                size_text_value = 4,
-                pal_vir = "viridis")
-```
-</div>
-</div>
-
-<div style = "display: grid; width: 2px; grid-template-columns: 750px 750px; align-items: start; justify-content: start; justify-items: center;">
-#### **<span style="color:blue"> Rank Casos confirmados 2020 Veracruz </span>**
-```{r}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map_loc.R')
-library(magrittr)
-library(dplyr)
-static_bump_map_loc(dataset = x,
-                    year = "2020",
-                    cve_edo = "30",
-                    country_text_x = .01,
-                    country_text_y = 0.08,
-                    axis_start = 0.4,
-                    value_text = 0.36,
-                    size_text_value = 4,
-                    pal_vir = "viridis")
-```
-
-<div>
-#### **<span style="color:blue"> Rank Casos confirmados 2021 Veracruz </span>**
-```{r}
-source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/static_bump_map_loc.R')
-static_bump_map_loc(dataset = x,
-                    year = "2021",
-                    cve_edo = "30",
-                    country_text_x = .01,
-                    country_text_y = 0.08,
-                    axis_start = 0.4,
-                    value_text = 0.36,
-                    size_text_value = 4,
-                    pal_vir = "viridis")
-```
-</div>
-</div>
-
-</div>
-</body>
-</html>
-
-### **<span style="color:#7d9029"> Distribución de Casos </span>**
-
-```{r}
-# step 1. dengue cases geocoded ####
-load("C:/Users/felip/Dropbox/geocoding_mex_2021/den_ver_2021/9.RData_geocoded/den2021_positivos.RData")
-y <- z[stringr::str_which(z$formatted_address,  " Mexico"),]
-
-y <- y |>
-  as.data.frame()|>
-  sf::st_as_sf(coords = c("long", "lat"),
-               crs = 4326)
-
-ver <- rgeomex::AGEE_inegi19_mx |>
-  dplyr::filter(CVE_ENT == "30")
-
-y <- y[ver,]
-# step 2. create the palette ####
-pal <- leaflet::colorBin(palette = fishualize::fish(n = length(unique(y$SEM)), 
-                                                    option = "Hypsypops_rubicundus",
-                                                    end = 1,
-                                                    alpha = .5),
-                         domain = y$SEM,
-                         bins = 10)
-
-y1 <- y |>
-    dplyr::filter(DENGUE_SER_TRIPLEX == 1)
-
-y2 <- y |>
-    dplyr::filter(DENGUE_SER_TRIPLEX == 2)
-y3 <- y |>
-    dplyr::filter(DENGUE_SER_TRIPLEX == 3)
-y4 <- y |>
-    dplyr::filter(DENGUE_SER_TRIPLEX == 4)
-########################
-
-# step 3. generate maps ####
-l <- leaflet::leaflet(y) %>% 
-    leaflet::addTiles() %>% 
-  leaflet::addCircleMarkers(color = ~pal(SEM),
-                            group = "DENV",
-                            stroke = FALSE, 
-                            opacity = 0.5,
-                            fillOpacity = 0.5) %>%
-    leaflet::addCircleMarkers(data = y1,
-                              group = "Serotipo 1",
-                              color = ~pal(SEM),
-                              stroke = FALSE, 
-                              opacity = 0.5,
-                              fillOpacity = 0.5) %>%
-    leaflet::addCircleMarkers(data = y2,
-                              group = "Serotipo 2",
-                              color = ~pal(SEM),
-                              stroke = FALSE, 
-                              opacity = 0.5,
-                              fillOpacity = 0.5) %>%
-    leaflet::addCircleMarkers(data = y1,
-                              group = "Serotipo 3",
-                              color = ~pal(SEM),
-                              stroke = FALSE, 
-                              opacity = 0.5,
-                              fillOpacity = 0.5) %>%
-    leaflet::addCircleMarkers(data = y4,
-                              group = "Serotipo 4",
-                              color = ~pal(SEM),
-                              stroke = FALSE, 
-                              opacity = 0.5,
-                              fillOpacity = 0.5) %>%
-  #leaflet::addPolylines(data = rgeomex::loc_inegi19_mx,
-   #                     color = "darkblue",
-    #                    label = ~NOMGEO,
-     #                   group = "Localidad",
-      #                  fillOpacity = .7,
-       #                 opacity = .9,
-        #                weight = .5) %>%
-  #leaflet.extras::addSearchFeatures(targetGroups = "Localidad",
-                                 #   options = leaflet.extras::searchFeaturesOptions(zoom #= 14, 
-                                                                                    #openPopup = FALSE)) %>%
-  
-    leaflet::addLegend("bottomright", 
-                       group = "legend",
-                       pal = pal, 
-                       values = ~SEM,
-                       title = "Semana Epidemiológica",
-                       opacity = 0.9,
-                       position = "bottomleft")
-
-# Step 4. generate the tiles and provider ###
-esri <- grep("^Esri|CartoDB|OpenStreetMap", 
-             leaflet::providers, 
-             value = TRUE)
-
-for (provider in esri) {
-    l <- l %>% leaflet::addProviderTiles(provider, 
-                                group = provider)
-}
-
-l %>%
-    leaflet::addLayersControl(baseGroups = names(esri),
-                     overlayGroups = c("legend", "DENV", "Serotipo 1",
-                                       "Serotipo 2", "Serotipo 3",
-                                       "Serotipo 4"),
-                     options = leaflet::layersControlOptions(collapsed = TRUE)) %>%
-    leaflet::addMiniMap(tiles = esri[[1]], 
-               toggleDisplay = TRUE,
-               position = "bottomleft") %>%
-    htmlwidgets::onRender("
-    function(el, x) {
-      var myMap = this;
-      myMap.on('baselayerchange',
-        function (e) {
-          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
-        })
-    }")
-
-```
-
-
-### **<span style="color:#7d9029"> Cadenas de Transmisión  </span>**
-
-```{r}
-library(magrittr)
-# step 1. load the dataset ####
-load("C:/Users/felip/Dropbox/space_time_analysis/knox_tests/10.results/edos/30_veracruz/knox_2021_veracruz.RData")
-
-# Step 2. create the list of localities names ###
-name_loc <- as.list(stringr::str_sub(names(knox_2021_veracruz),
-                         start = -0,
-                         end = -7))
-
-# Step 3. create the list of localities ids ###
-cve_edo <- as.list(stringr::str_extract(names(knox_2021_veracruz),
-                                            pattern = "[[:digit:].,]{2}"
-                                            ))
-
-
-# Step 4. make the st_link maps function ####
-source('C:/Users/felip/OneDrive/proyects/spatial_analysis_dengue/space_time_analysis/knox_test/3.Functions/space_time_link_map_ver2.R')
-st_link_maps <- function(x, y, z){
-    space_time_link_map_ver2(x = x,
-                             locality = y,
-                             cve_edo = z,
-                             maptype = "interactive_map",
-                             facetmap = FALSE)
-}
-
-
-# Step 5. make the st_link maps ####
-knox <- purrr::pmap(.l = list(x = knox_2021_veracruz,
-                           y = name_loc,
-                           z = cve_edo),
-                 .f = st_link_maps)
-
-# step 6. make the function for extract the cases an link ###
-library(sf)
-w  <- purrr::map_df(.x = knox,
-                     .f = function(x){x$st_cases_week})
-st_link_week <- purrr::map_df(.x = knox,
-                           .f = function(x){x$st_link_week})
-
-# Step 6 plot the leaflet map ####
-pal <- leaflet::colorFactor(palette = fishualize::fish(n = length(unique(w$week_factor)),
-                                                       option = "Scarus_hoefleri",
-                                                       direction = -1),
-                            domain = w$week_factor)
-l <- leaflet::leaflet() %>%
-    leaflet::addTiles() %>%
-  #leaflet::addPolylines(data = rgeomex::loc_inegi19_mx,
-   #                     color = "darkblue",
-    #                    label = ~NOMGEO,
-      #                  group = "Localidad",
-          #              fillOpacity = .7,
-              #          opacity = .9,
-                #        weight = .5) %>%
-  #leaflet.extras::addSearchFeatures(targetGroups = "Localidad",
-                                   # options = leaflet.extras::searchFeaturesOptions(zoom = 14, 
-                                                                                    #openPopup = FALSE)) %>%
-    leaflet::addPolylines(data = st_link_week,
-                          color = ~pal(week_factor),
-                          weight = 5,
-                          opacity = .8) %>%
-    leaflet::addCircleMarkers(data = w,
-                              radius = 10,
-                              fillColor = ~pal(week_factor),
-                              fillOpacity = .8,
-                              stroke = TRUE,
-                              weight = 5,
-                              color = "black",
-                              opacity = .5) %>%
-    leaflet::addLegend(pal = pal,
-                       values = w$week_factor,
-                       opacity = 1,
-                       title = "Semana",
-                       position = "topright")
-esri <- grep("^Esri|CartoDB|OpenStreetMap", #"^Esri|OpenTopoMap|OpenStreetMap|HERE|CartoDB|NASAGIBS", 
-             leaflet::providers,
-             value = TRUE)
-
-
-for (provider in esri) {
-    l <- l %>% 
-        leaflet::addProviderTiles(provider,
-                                  group = provider)
-}
-
-l %>%
-    leaflet::addLayersControl(baseGroups = names(esri),
-                              options = leaflet::layersControlOptions(collapsed = TRUE)) %>%
-    leaflet::addMiniMap(tiles = esri[[1]],
-                        toggleDisplay = TRUE,
-                        position = "bottomleft") %>%
-    htmlwidgets::onRender(" function(el, x) {
-            var myMap = this;
-      myMap.on('baselayerchange',
-        function (e) {
-          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
-        })
-    }")
-```
-
-> las cadenas de transmisión son actualizadas los lunes
-
-
-### **<span style="color:#7d9029">Heatmap </span>**
 <html>
 <head>
 <style>
 .myDiv1 {
-  border: 2px outset darkgreen;
+  border: 1px outset darkgreen;
   background-color: darkgreen;
   text-align: center;
 }
@@ -553,7 +74,7 @@ l %>%
 heatmap_confirmados(dataset = x, 
                     year = 2021, 
                     size_text = 3,
-                    state = "VERACRUZ",
+                    state = "GUERRERO",
                     JS = TRUE,
                     MPO = TRUE,
                     EDO = FALSE)
@@ -564,236 +85,74 @@ heatmap_confirmados(dataset = x,
 heatmap_confirmados(dataset = x, 
                     year = 2021, 
                     size_text = 3,
-                    state = "VERACRUZ",
+                    state = "GUERRERO",
                     JS = FALSE,
                     MPO = TRUE,
                     EDO = FALSE)
 ```
 
+#### **<span style="color:white">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2020) </span>**
+
+```{r}
+heatmap_confirmados_col(dataset = x,
+                        size_text = 3 ,
+                        year = 2020,
+                        mpo = "CHILPANCINGO DE LOS BRAVO",
+                        state = "GUERRERO",
+                        loc  = "CHILPANCINGO DE LOS BRAVO")
+```
+
+
+#### **<span style="color:white">Heatmap de casos confirmados por colonia en la localidad de Chilpancingo (2021)</span>**
+
+```{r}
+heatmap_confirmados_col(dataset = x,
+                        size_text = 3 ,
+                        year = 2021,
+                        mpo = "CHILPANCINGO DE LOS BRAVO",
+                        state = "GUERRERO",
+                        loc  = "CHILPANCINGO DE LOS BRAVO")
+```
+
+#### **<span style="color:white"> Canal Endémico de la localidad de Chilpancingo</span>**
+```{r}
+load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_loc.RData")
+plotly::ggplotly(boldenr::epi_channel(x = w,
+                                      edo = "GUERRERO", 
+                                      jur = "x",
+                                      mpo = "x",
+                                      loc = "CHILPANCINGO DE LOS BRAVO",
+                                      y = x,
+                                      year1 = 2020,
+                                      year2 = 2021,
+                                      x_epi = 30, y_epi = 15,
+                                      x_alerta = 40, y_alerta = 7, 
+                                      x_seg = 42, y_seg = 4,
+                                      x_exito = 38, y_exito = 1))
+```
+
 </div>
 </body>
 </html>
 
 
-### **<span style="color:#7d9029">Canal Endémico </span>**
-<html>
-<head>
-<style>
-.myDiv1 {
-  border: 2px outset darkgreen;
-  background-color: darkgreen;
-  text-align: center;
-}
-</style>
-</head>
-<body>
+### **<span style="color:#006600; font-size: 20px"> Tuberculosis </span>**
 
-<div class="myDiv1">
-  <h2></h2>
-  <p></p>
-#### **<span style="color:white">Casos 2020 versus Casos 2021</span>**
-```{r}
-plotly::ggplotly(gginnards::delete_layers(boldenr::plot_arbovirosis(x = x, 
-                                           state = "VERACRUZ",
-                                           year1 = 2020,
-                                           year2 = 2021) +
-                   ggplot2::theme(legend.position = "none"), 
-                   match_type ="GeomText"))
+### **<span style="color:#006600; font-size: 20px"> IPPA </span>**
 
-```
+### **<span style="color:#006600; font-size: 20px"> Chagas </span>**
 
-#### **<span style="color:white">Canal Endémico Estatal </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = boldenr::dendata_epichannel,
-                                      edo = "VERACRUZ", 
-                                      jur = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 400,
-                                      x_alerta = 36, y_alerta = 250, 
-                                      x_seg = 37, y_seg = 120,
-                                      x_exito = 37, y_exito = 55))
-```
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Pánuco </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "PANUCO",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 30, y_epi = 25,
-                                      x_alerta = 38, y_alerta = 10, 
-                                      x_seg = 38, y_seg = 5,
-                                      x_exito = 40, y_exito = 1))
-```
+**Regulación Sanitaria**
+=====================================  
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Tuxpan </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "TUXPAN",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 25,
-                                      x_alerta = 38, y_alerta = 10, 
-                                      x_seg = 38, y_seg = 5,
-                                      x_exito = 40, y_exito = 1))
-```
+Column {.tabset}
+------------------------------------
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Poza Rica </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "POZA RICA",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 45,
-                                      x_alerta = 38, y_alerta = 25, 
-                                      x_seg = 38, y_seg = 15,
-                                      x_exito = 40, y_exito = 5))
-```
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Martínez de la Torre </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "MARTINEZ DE LA TORRE",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 30,
-                                      x_alerta = 32, y_alerta = 10, 
-                                      x_seg = 38, y_seg = 5,
-                                      x_exito = 42, y_exito = 1))
-```
+### **<span style="color:#006600; font-size: 20px"> Vigilancia Bacteriológica del Agua</span>**
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Xalapa </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "JALAPA",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 20,
-                                      x_alerta = 38, y_alerta = 10, 
-                                      x_seg = 41, y_seg = 4,
-                                      x_exito = 42, y_exito = 1))
-```
+### **<span style="color:#006600; font-size: 20px"> Bienes & Servicios</span>**
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Veracruz </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "VERACRUZ",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 25, y_epi = 70,
-                                      x_alerta = 38, y_alerta = 40, 
-                                      x_seg = 38, y_seg = 18,
-                                      x_exito = 38, y_exito = 6))
-```
+### **<span style="color:#006600; font-size: 20px"> Salud Ambiental</span>**
 
-#### **<span style="color:white">Canal Endémico Jurisdicción Córdoba </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "CORDOBA",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 20, y_epi = 25,
-                                      x_alerta = 40, y_alerta = 12, 
-                                      x_seg = 34, y_seg = 4,
-                                      x_exito = 42, y_exito = 1))
-```
-
-#### **<span style="color:white">Canal Endémico Jurisdicción Orizaba </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "ORIZABA",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 20, y_epi = 25,
-                                      x_alerta = 42, y_alerta = 10, 
-                                      x_seg = 40, y_seg = 3,
-                                      x_exito = 42, y_exito = 1))
-```
-
-#### **<span style="color:white">Canal Endémico Jurisdicción San Ándres Tuxtla </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "SAN ANDRES TUXTLA",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 20, y_epi = 25,
-                                      x_alerta = 40, y_alerta = 12, 
-                                      x_seg = 40, y_seg = 5,
-                                      x_exito = 42, y_exito = 1))
-```
-
-#### **<span style="color:white">Canal Endémico Jurisdicción Cosamaloapan </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "COSAMALOAPAN",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 20, y_epi = 15,
-                                      x_alerta = 40, y_alerta = 12, 
-                                      x_seg = 35, y_seg = 5,
-                                      x_exito = 42, y_exito = 1))
-```
-
-#### **<span style="color:white">Canal Endémico Jurisdicción Coatzacoalco </span>**
-```{r}
-load("C:/Users/felip/OneDrive/automatic_read_sinave/8.RData/epid_channel_data_js.RData")
-plotly::ggplotly(boldenr::epi_channel(x = y,
-                                      edo = "VERACRUZ", 
-                                      jur = "COATZACOALCOS",
-                                      mpo = NULL,
-                                      y = x,
-                                      year1 = 2020,
-                                      year2 = 2021,
-                                      x_epi = 20, y_epi = 90,
-                                      x_alerta = 36, y_alerta = 50, 
-                                      x_seg = 35, y_seg = 15,
-                                      x_exito = 42, y_exito = 1))
-
-```
-
-</div>
-</body>
-</html>
