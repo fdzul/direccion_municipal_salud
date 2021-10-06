@@ -45,11 +45,21 @@ library(ggplot2)
 
 
 
-**Vigilancia Epidemiológica**
+**Dengue**
 =====================================  
 
 Column {.tabset}
 ------------------------------------
+
+
+### **<span style="color:#006600; font-size: 20px"> Panorama Nacional </span>**
+
+
+### **<span style="color:#006600; font-size: 20px"> Panorama Estatal </span>**
+
+
+### **<span style="color:#006600; font-size: 20px"> Panorama Estatal </span>**
+
 
 
 ### **<span style="color:#006600; font-size: 20px"> Dengue </span>**
