@@ -27,6 +27,37 @@ x <- boldenr::read_dataset_bol(path = "C:/Users/felip/OneDrive/datasets/DGE/arbo
 source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/heatmap_confirmados.R')
 source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/heatmap_confirmados_col.R', encoding = 'UTF-8')
 
+options(shiny.maxRequestSize=30*1024^2)
+# Packages
+library(formattable)
+library(tmap)
+library(rmarkdown)
+library(knitr)
+library(shiny)
+library(flexdashboard)
+library(plotly)
+library(boldenr)
+library(stringr)
+library(magrittr)
+library(leaflet)
+library(dash)
+library(ECharts2Shiny)
+
+# data
+
+locality <- rgeomex::loc_inegi19_mx |>
+        dplyr::filter(NOMGEO %in% c(similiars::find_most_similar_string("Chilapancingo de los Bravo", unique(NOMGEO))) &
+                          CVE_ENT %in% c("12"))
+
+#load("C:/Users/felip/OneDrive/proyects/hotspots/8.RData/eggs_hotspots_historic/30_veracruz/eggs_prediction_2014_2019_dataframe/30_03_131_pozarica_k40_zinb1_2014_2019.RData")
+
+load("C:/Users/felip/OneDrive/proyects/hotspots/8.RData/cases_hotspots_agebs19.RData")
+cases_hotspots_agebs19 <- cases_hotspots_agebs19 |> sf::st_make_valid()
+hotspots <- cases_hotspots_agebs19[locality |> sf::st_make_valid(),]
+
+blocks <- rgeomex::blocks_ine20_mx_centroid |>
+      sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+
 ```
 
 ```{r}
@@ -142,11 +173,209 @@ plotly::ggplotly(boldenr::epi_channel(x = w,
 
 ### **<span style="color:#006600; font-size: 20px"> Distribución de Casos </span>**
 
-### **<span style="color:#006600; font-size: 20px"> Hotspots de la Transmisión </span>**
 
-### **<span style="color:#006600; font-size: 20px"> Cadenas de Transmisión </span>**
 
-### **<span style="color:#006600; font-size: 20px"> Hotspots del vector </span>**
+**Hotspots de los casos**
+=====================================  
 
-### **<span style="color:#006600; font-size: 20px"> Estratificación </span>**
+Column {data-width=500}
+-------------------------------------
 
+
+
+### **<span style="color:#7d9029; font-size: 20px">Hotspots de la Transmisión del Dengue en el área urbana de Chilpancingo</span> **
+
+```{r hotspots, dpi=600, warning=FALSE, fig.align = "center",out.height='100%', out.width = '100%',fig.show = "hold"}
+library(magrittr)
+pal <- leaflet::colorFactor(palette = rcartocolor::carto_pal(n = max(hotspots$intensity_gi), name = "OrYel"), domain = hotspots$intensity_gi)
+
+#pal <- leaflet::colorFactor(input$variablespalette, domain = hotspots$intensity_gi)
+
+hotspots$labels <- paste0("<strong> AGEB: </strong> ",
+                          hotspots$CVEGEO, "<br/> ",
+                          "<strong> intensidad: </strong> ",
+                          hotspots$intensity_gi, "<br/> ") %>%
+    lapply(htmltools::HTML)
+  
+  
+  
+l <- leaflet::leaflet(data = hotspots) %>%
+    leaflet::addTiles() %>%
+    leaflet::addPolygons(fillColor = ~pal(intensity_gi),
+                         color = "white",
+                         group = "Hotspots",
+                         weight = 1,
+                         fillOpacity = 0.7,
+                         label = ~labels,
+                         highlightOptions = leaflet::highlightOptions(color = "black",
+                                                                      bringToFront = TRUE)) %>%
+    leaflet::addLegend(pal = pal, 
+                       values = ~intensity_gi,
+                       opacity = 0.7,
+                       title = "Intensidad")
+
+esri <- grep("^Esri|CartoDB|OpenStreetMap", leaflet::providers, value = TRUE)
+for (provider in esri) {
+    l <- l %>% leaflet::addProviderTiles(provider, 
+                                         group = provider)
+}
+
+l %>%
+    leaflet::addLayersControl(baseGroups = names(esri),
+                              options = leaflet::layersControlOptions(collapsed = TRUE),
+                              overlayGroups = c("Hotspots")) %>%
+    leaflet::addMiniMap(tiles = esri[[1]], 
+                        toggleDisplay = TRUE,
+                        minimized = TRUE,
+                        position = "bottomleft") %>%
+    htmlwidgets::onRender("
+    function(el, x) {
+      var myMap = this;
+      myMap.on('baselayerchange',
+        function (e) {
+          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+        })
+    }")
+```
+
+
+
+### **<span style="color:#7d9029">Carga de la Enfermedad en el área Hotspots</span>**
+
+<div class = "row">
+<div class = "col-md-4">
+<center>
+
+```{r gauge1, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1.5}
+
+
+
+y <- hotspots  %>%
+    sf::st_drop_geometry() %>%
+    dplyr::mutate(n_cases = rowSums(dplyr::select(., dplyr::starts_with("DENV"))),
+                  loc = "locality") %>%
+    dplyr::select(loc, n_cases, hotspots_gi) 
+y_hot <- y %>% dplyr::filter(hotspots_gi == 1)
+
+flexdashboard::gauge(round((sum(y_hot$n_cases)/sum(y$n_cases))*100, digits = 1),
+      min = 0, max = 100, 
+      symbol = '%', 
+      label = "Casos de Dengue",
+      flexdashboard::gaugeSectors(success = c(10, 100), 
+                   warning = c(6, 10), 
+                   danger = c(0, 5),
+                   colors = c("success", "warning","danger"))
+      )
+```
+
+</center>
+</div>
+
+<div class = "col-md-4">
+<center> 
+
+```{r gauge2,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1.5}
+
+y <- hotspots  %>%
+    sf::st_drop_geometry() %>%
+    dplyr::mutate(n_cases = rowSums(dplyr::select(., dplyr::starts_with("DENV"))),
+                  loc = "locality") %>%
+    dplyr::select(loc, n_cases, hotspots_gi) 
+y_hot <- y %>% dplyr::filter(hotspots_gi == 1)
+  
+flexdashboard::gauge(round((nrow(y_hot)/nrow(y))*100, digits = 1),
+      min = 0, max = 100, 
+      symbol = '%', 
+      label = "AGEBs",
+      flexdashboard::gaugeSectors(success = c(0, 30), 
+                   warning = c(31, 50), 
+                   danger = c(51, 100),
+                   colors = c("success", "warning","danger"))
+      )
+```
+
+</center>
+</div>
+
+<div class = "col-md-4">
+<center> 
+
+```{r gauge3,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1.5}
+
+
+y_hot <- hotspots %>% dplyr::filter(hotspots_gi == 1)
+centroid <- rgeomex::blocks_ine20_mx_centroid %>%
+  sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+b_loc <- centroid[hotspots, ]
+b_hot <- b_loc[y_hot, ]
+flexdashboard::gauge(round((nrow(b_hot)/nrow(b_loc))*100, digits = 1),
+      min = 0, max = 100, 
+      symbol = '%', 
+      label = "Manzanas",
+      flexdashboard::gaugeSectors(success = c(0, 30), 
+                   warning = c(31, 50), 
+                   danger = c(51, 100),
+                   colors = c("success", "warning","danger"))
+      )
+```
+
+</center>
+</div>
+</div>
+
+Row {data-width=300}
+---------------------------------------
+
+
+
+### **<span style="color:#7d9029">Odds Ratio $y = log(\frac{p}{1-p})$ </span>**
+
+```{r, dpi=600, warning=FALSE, fig.align = "center", out.width = '100%',fig.show = "hold"}
+ 
+
+# Logistics Regression
+glm.fit <- glm(hotspots_gi ~ DENV_2008 + DENV_2009 + DENV_2010 +DENV_2011 + DENV_2012 + DENV_2013 + DENV_2014 + DENV_2015 + DENV_2016 +
+                   DENV_2017  + DENV_2019 + DENV_2020,
+               data = hotspots, 
+               family = binomial)
+
+result <- parameters::model_parameters(glm.fit, 
+                                      exponentiate = TRUE)
+
+plot(result, size_text = 4)
+```
+
+### **<span style="color:#7d9029">Power Law $y = ax^{b}$</span>**
+
+```{r, dpi = 600, warning=FALSE, fig.align = "center", out.width = '100%',out.height='100%',fig.show = "hold"}
+
+# Step 7. make the function por calculate the cumulative ####
+funcumsum <- function(x){
+    x$cumulative_n <- cumsum(x$n_cases)
+    x$perc_cumsum_n <- round((cumsum(x$n_cases)/sum(x$n_cases))*100, digits = 1)
+    #x$cumulative_ha <- cumsum(x$ha)
+    #x$perc_cumsum_ha <- round((cumsum(x$ha)/sum(x$ha))*100, digits = 1)
+    x$id <- 1
+    x$id_cumsum <- cumsum(x$id)
+    x$id_perc_cum <- round((cumsum(x$id)/nrow(x))*100, digits = 1)
+    x
+}
+# step 8.
+
+data_pareto <- hotspots  %>%
+    sf::st_drop_geometry() %>%
+    dplyr::mutate(n_cases = rowSums(dplyr::select(., dplyr::starts_with("DENV"))),
+                  loc = "locality") %>%
+    dplyr::select(loc, n_cases, hotspots_gi) %>%
+    dplyr::arrange(loc, desc(hotspots_gi), desc(n_cases)) %>%
+    dplyr::group_by(loc) %>%
+    tidyr::nest() %>%
+    dplyr::mutate(pareto_cases = purrr::map(data,
+                                            funcumsum)) %>%
+    dplyr::select(-data) %>%
+    tidyr::unnest(cols = c(pareto_cases))
+
+# step 4. visualization of pareto rules ####
+plotly::ggplotly(denhotspots::power_law_plot(x = data_pareto)) %>% plotly::layout(showlegend = FALSE)
+
+```
