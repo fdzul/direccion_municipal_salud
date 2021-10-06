@@ -54,15 +54,9 @@ Column {.tabset}
 
 ### **<span style="color:#006600; font-size: 20px"> Panorama Nacional </span>**
 
-
 ### **<span style="color:#006600; font-size: 20px"> Panorama Estatal </span>**
 
-
-### **<span style="color:#006600; font-size: 20px"> Panorama Estatal </span>**
-
-
-
-### **<span style="color:#006600; font-size: 20px"> Dengue </span>**
+### **<span style="color:#006600; font-size: 20px"> Panorama Municipal </span>**
 
 <html>
 <head>
@@ -146,23 +140,13 @@ plotly::ggplotly(boldenr::epi_channel(x = w,
 </html>
 
 
-### **<span style="color:#006600; font-size: 20px"> Tuberculosis </span>**
+### **<span style="color:#006600; font-size: 20px"> Distribución de Casos </span>**
 
-### **<span style="color:#006600; font-size: 20px"> IPPA </span>**
+### **<span style="color:#006600; font-size: 20px"> Hotspots de la Transmisión </span>**
 
-### **<span style="color:#006600; font-size: 20px"> Chagas </span>**
+### **<span style="color:#006600; font-size: 20px"> Cadenas de Transmisión </span>**
 
+### **<span style="color:#006600; font-size: 20px"> Hotspots del vector </span>**
 
-**Regulación Sanitaria**
-=====================================  
-
-Column {.tabset}
-------------------------------------
-
-
-### **<span style="color:#006600; font-size: 20px"> Vigilancia Bacteriológica del Agua</span>**
-
-### **<span style="color:#006600; font-size: 20px"> Bienes & Servicios</span>**
-
-### **<span style="color:#006600; font-size: 20px"> Salud Ambiental</span>**
+### **<span style="color:#006600; font-size: 20px"> Estratificación </span>**
 
