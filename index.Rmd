@@ -58,6 +58,10 @@ hotspots <- cases_hotspots_agebs19[locality |> sf::st_make_valid(),]
 
 blocks <- rgeomex::blocks_ine20_mx_centroid |>
       sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+source('C:/Users/felip/Dropbox/r_developments/r_dashboards/github_pages/test_dashboard/3.Functions/risk_agebs.R')
+risk <- risk_agebs(spde_model = chilpancingo_spde_zinb1_betas_2013_2018,
+                   hotspots = hotspots,
+                   intensity_perc = 20)
 
 ```
 
@@ -247,7 +251,7 @@ l %>%
 <div class = "col-md-4">
 <center>
 
-```{r gauge1, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1.5}
+```{r gauge1, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1}
 
 
 
@@ -275,7 +279,7 @@ flexdashboard::gauge(round((sum(y_hot$n_cases)/sum(y$n_cases))*100, digits = 1),
 <div class = "col-md-4">
 <center> 
 
-```{r gauge2,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1.5}
+```{r gauge2,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1}
 
 y <- hotspots  %>%
     sf::st_drop_geometry() %>%
@@ -301,7 +305,7 @@ flexdashboard::gauge(round((nrow(y_hot)/nrow(y))*100, digits = 1),
 <div class = "col-md-4">
 <center> 
 
-```{r gauge3,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1.5}
+```{r gauge3,fig.align = "center", out.height='100%', out.width = '100%', fig.width= 1.5, fig.height=1}
 
 
 y_hot <- hotspots %>% dplyr::filter(hotspots_gi == 1)
@@ -452,3 +456,168 @@ Column {.tabset}
 ```
 
 > <span style="color:#7d9029">Los polígonos representan los AGEBs indentificados como hotspot de casos </span>
+
+
+
+
+**Mapa de riesgo**
+=====================================  
+
+
+Column {data-width=500}
+-------------------------------------
+
+
+
+### **<span style="color:#7d9029"> Mapa de Riesgo </span>**
+
+```{r map_risk, dpi=600, warning=FALSE, fig.align = "center",out.height='100%', out.width = '100%',fig.show = "hold"}
+
+# 4. visualizacion leaflet map ####
+    pal <- leaflet::colorFactor(palette = c("#F44B1FFF","#FF9000FF",
+                                            "gold", "#2ECC71"), 
+                                domain = risk$risk)
+  
+l <- leaflet::leaflet(data = risk) %>%
+    leaflet::addTiles() %>%
+    leaflet::addPolygons(fillColor = ~pal(risk),
+                         color = "white",
+                         group = "Risk",
+                         fillOpacity = 0.7,
+                         weight = 1,
+                         #label = ~labels,
+                         highlightOptions = leaflet::highlightOptions(color = "black",
+                                                                      bringToFront = TRUE)) %>%
+    leaflet::addLegend(pal = pal, 
+                       values = ~risk,
+                       opacity = 0.7,
+                       title = "Riesgo")
+
+esri <- grep("^Esri|CartoDB|OpenStreetMap", leaflet::providers, value = TRUE)
+for (provider in esri) {
+    l <- l %>% leaflet::addProviderTiles(provider, 
+                                         group = provider)
+}
+
+l %>%
+    leaflet::addLayersControl(baseGroups = names(esri),
+                              options = leaflet::layersControlOptions(collapsed = TRUE),
+                              overlayGroups = c("Risk")) %>%
+    leaflet::addMiniMap(tiles = esri[[1]], 
+                        toggleDisplay = TRUE,
+                        minimized = TRUE,
+                        position = "bottomleft") %>%
+    htmlwidgets::onRender("
+    function(el, x) {
+      var myMap = this;
+      myMap.on('baselayerchange',
+        function (e) {
+          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+        })
+    }")
+```
+
+
+### **<span style="color:#7d9029">Porcentaje de Manzanas</span>**
+
+<div class = "row">
+<div class = "col-md-4">
+<center>
+
+```{r gauge1_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1, message=FALSE, error = FALSE, warning=FALSE}
+
+    
+    #########################################################
+    block_loc <- blocks[risk,]
+    block_hh_risk <- blocks[risk %>% dplyr::filter(risk == "Muy Alto Riesgo"),]
+    
+    flexdashboard::gauge(value = round((nrow(block_hh_risk)/nrow(block_loc))*100, 
+                        digits = 1),
+          min = 0, max = 100, 
+          symbol = '%', 
+          label = "Muy Alto Riesgo",
+          flexdashboard::gaugeSectors(success = c(0, 100), 
+                       colors = c("#E74C3C")))
+```
+
+</center>
+</div>
+
+<div class = "col-md-4">
+<center> 
+
+```{r gauge2_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1, message=FALSE, error = FALSE, warning=FALSE}
+
+    block_loc <- blocks[risk,]
+    block_hh_risk <- blocks[risk %>% dplyr::filter(risk == "Alto Riesgo"),]
+    
+    flexdashboard::gauge(value = round((nrow(block_hh_risk)/nrow(block_loc))*100, 
+                        digits = 1),
+          min = 0, max = 100, 
+          symbol = '%', 
+          label = "Alto Riesgo",
+          flexdashboard::gaugeSectors(success = c(0, 100), 
+                       colors = c("#F39C12")))
+```
+
+</center>
+</div>
+
+<div class = "col-md-4">
+<center> 
+
+```{r gauge3_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=1, message=FALSE, error = FALSE, warning=FALSE}
+    block_loc <- blocks[risk,]
+    block_hh_risk <- blocks[risk %>% dplyr::filter(risk == "Mediano Riesgo"),]
+    
+    
+    # 4. gaugue #### 
+    flexdashboard::gauge(value = round((nrow(block_hh_risk)/nrow(block_loc))*100, 
+                        digits = 1),
+          min = 0, max = 100, 
+          symbol = '%', 
+          label = "Mediano Riesgo",
+          flexdashboard::gaugeSectors(success = c(0, 100), 
+                       colors = c("#F1C40F")))
+
+```
+
+</center>
+</div>
+</div>
+
+
+
+Row {data-width=250, data-higth=700}
+---------------------------------------
+
+### **<span style="color:#7d9029">Colecta de Adultos </span>**
+
+```{r adult, out.height='50%', out.width = '50%', fig.align = "center"}
+    block_loc <- blocks[risk,]
+  
+  # 4. table ####
+    x <- data.frame("Aspiradores" = seq(from = 2, to= 20, by =2),
+                    "Manzana" = seq(from = 2, to= 20, by =2)*5*5,
+                    "Area1" = round(seq(from = 2, to= 20, by =2)*5*5/nrow(block_loc)*100, digits = 1),
+                    "Area2" = round(seq(from = 2, to= 20, by =2)*5*5/nrow(block_loc)*100, digits = 1)*5)
+    DT::datatable(data = x, rownames = FALSE, options = list(paging = TRUE))
+```
+  
+  
+### **<span style="color:#7d9029"> Rociado Residual </span>**
+
+```{r irs, out.height='50%', out.width = '50%', fig.align = "center"}
+
+  # 4. table ####
+    x <- data.frame(Riesgo = c("Muy Alto Riesgo","Alto Riesgo","Mediano Riesgo"),
+                    Manzanas = c(nrow(blocks[risk %>% dplyr::filter(risk == "Muy Alto Riesgo"),]),
+                                 nrow(blocks[risk %>% dplyr::filter(risk == "Alto Riesgo"),]),
+                                 nrow(blocks[risk %>% dplyr::filter(risk == "Mediano Riesgo"),]))) %>%
+      dplyr::mutate(casas = Manzanas*20,
+                    sobres = casas/2,
+                    cunetes = sobres/200)
+    DT::datatable(data = x, rownames = FALSE, options = list(paging = TRUE))
+```
+
+
