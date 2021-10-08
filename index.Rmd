@@ -524,7 +524,7 @@ l %>%
 <div class = "col-md-4">
 <center>
 
-```{r gauge1_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.8, message=FALSE, error = FALSE, warning=FALSE}
+```{r gauge1_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.5, message=FALSE, error = FALSE, warning=FALSE}
 
     
     #########################################################
@@ -546,7 +546,7 @@ l %>%
 <div class = "col-md-4">
 <center> 
 
-```{r gauge2_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.8, message=FALSE, error = FALSE, warning=FALSE}
+```{r gauge2_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.5, message=FALSE, error = FALSE, warning=FALSE}
 
     block_loc <- blocks[risk,]
     block_hh_risk <- blocks[risk %>% dplyr::filter(risk == "Alto Riesgo"),]
@@ -566,7 +566,7 @@ l %>%
 <div class = "col-md-4">
 <center> 
 
-```{r gauge3_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.8, message=FALSE, error = FALSE, warning=FALSE}
+```{r gauge3_map_risk, out.height='100%', out.width = '100%', fig.align = "center", fig.width=1.5, fig.height=.5, message=FALSE, error = FALSE, warning=FALSE}
     block_loc <- blocks[risk,]
     block_hh_risk <- blocks[risk %>% dplyr::filter(risk == "Mediano Riesgo"),]
     
